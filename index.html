@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light" style="--hue: 145;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hoholauncher</title>
+  <style>
+    :root {
+      --hue: 145;
+      --primary: hsl(var(--hue) 50% 40%);
+      --on-primary: hsl(var(--hue) 40% 98%);
+      --primary-container: hsl(var(--hue) 60% 90%);
+      --on-primary-container: hsl(var(--hue) 50% 15%);
+      --surface: hsl(var(--hue) 15% 97%);
+      --surface-container: hsl(var(--hue) 12% 93%);
+      --surface-container-high: hsl(var(--hue) 10% 88%);
+      --on-surface: hsl(var(--hue) 10% 12%);
+      --on-surface-variant: hsl(var(--hue) 8% 35%);
+      --outline: hsl(var(--hue) 8% 55%);
+      --shadow: 0 2px 8px rgba(0,0,0,.15);
+      --radius: 20px;
+    }
+
+    [data-theme="dark"] {
+      --primary: hsl(var(--hue) 50% 70%);
+      --on-primary: hsl(var(--hue) 40% 15%);
+      --primary-container: hsl(var(--hue) 35% 25%);
+      --on-primary-container: hsl(var(--hue) 60% 90%);
+      --surface: hsl(var(--hue) 10% 9%);
+      --surface-container: hsl(var(--hue) 10% 14%);
+      --surface-container-high: hsl(var(--hue) 10% 20%);
+      --on-surface: hsl(var(--hue) 10% 92%);
+      --on-surface-variant: hsl(var(--hue) 8% 75%);
+      --outline: hsl(var(--hue) 8% 50%);
+      --shadow: 0 2px 8px rgba(0,0,0,.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--surface);
+      color: var(--on-surface);
+      min-height: 100vh;
+      transition: background .3s, color .3s;
+    }
+
+    .container { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; }
+
+    header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; border-radius: var(--radius);
+      background: var(--primary-container); color: var(--on-primary-container);
+      margin-bottom: 24px;
+    }
+    header h1 { font-size: 24px; font-weight: 500; }
+    header .logo { font-size: 32px; }
+
+    .theme-btn {
+      margin-left: auto; width: 44px; height: 44px; border-radius: 50%;
+      border: none; cursor: pointer; font-size: 20px;
+      background: var(--surface-container-high); color: var(--on-surface);
+    }
+
+    section {
+      background: var(--surface-container); border-radius: var(--radius);
+      padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow);
+    }
+    section h2 { font-size: 18px; font-weight: 500; margin-bottom: 14px; color: var(--primary); }
+
+    .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+    .swatch {
+      width: 40px; height: 40px; border-radius: 50%; border: 3px solid transparent;
+      cursor: pointer; transition: transform .15s;
+    }
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.active { border-color: var(--on-surface); }
+
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip {
+      padding: 8px 16px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--outline); background: transparent; color: var(--on-surface);
+      font-size: 14px;
+    }
+    .chip.active { background: var(--primary-container); color: var(--on-primary-container); border-color: transparent; }
+
+    .instance {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-radius: 16px; margin-bottom: 10px; cursor: pointer;
+      background: var(--surface-container-high); border: 2px solid transparent;
+      transition: border-color .15s;
+    }
+    .instance.selected { border-color: var(--primary); }
+    .instance .name { font-weight: 500; }
+    .instance .meta { font-size: 13px; color: var(--on-surface-variant); margin-top: 2px; }
+    .badge {
+      font-size: 12px; padding: 4px 10px; border-radius: 999px;
+      background: var(--primary-container); color: var(--on-primary-container);
+    }
+
+    .ram-row { display: flex; align-items: center; gap: 14px; }
+    input[type="range"] { flex: 1; accent-color: var(--primary); }
+    .ram-value { min-width: 70px; text-align: right; font-weight: 500; }
+
+    .path {
+      font-family: ui-monospace, monospace; font-size: 13px;
+      color: var(--on-surface-variant); margin-top: 10px; word-break: break-all;
+    }
+
+    .launch-btn {
+      width: 100%; padding: 16px; border: none; border-radius: 999px; cursor: pointer;
+      background: var(--primary); color: var(--on-primary);
+      font-size: 17px; font-weight: 500; margin-top: 4px;
+      transition: opacity .2s;
+    }
+    .launch-btn:disabled { opacity: .6; cursor: default; }
+
+    .progress { height: 8px; border-radius: 999px; background: var(--surface-container-high); margin-top: 14px; overflow: hidden; display: none; }
+    .progress.show { display: block; }
+    .progress-bar { height: 100%; width: 0; background: var(--primary); transition: width .3s; }
+    .status { font-size: 14px; margin-top: 8px; color: var(--on-surface-variant); min-height: 20px; }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(120px);
+      background: var(--on-surface); color: var(--surface); padding: 12px 20px;
+      border-radius: 14px; box-shadow: var(--shadow); transition: transform .3s;
+      font-size: 14px;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <span class="logo">⛏</span>
+      <h1>Hoholauncher</h1>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Сменить тему">🌙</button>
+    </header>
+
+    <section>
+      <h2>Цвет темы</h2>
+      <div class="swatches" id="swatches"></div>
+    </section>
+
+    <section>
+      <h2>Сборки</h2>
+      <div class="chips" id="chips"></div>
+      <div id="instances"></div>
+      <div class="path">Папка игры: .hoholauncher/minecraft</div>
+    </section>
+
+    <section>
+      <h2>Память (RAM)</h2>
+      <div class="ram-row">
+        <input type="range" id="ram" min="1" max="16" value="4" oninput="updateRam()">
+        <span class="ram-value" id="ramValue">4 ГБ</span>
+      </div>
+    </section>
+
+    <section>
+      <button class="launch-btn" id="launchBtn" onclick="launch()">Играть</button>
+      <div class="progress" id="progress"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="status" id="status"></div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const COLORS = [
+      { name: "Зелёный", hue: 145 },
+      { name: "Синий", hue: 215 },
+      { name: "Фиолетовый", hue: 275 },
+      { name: "Красный", hue: 10 },
+      { name: "Оранжевый", hue: 35 }
+    ];
+
+    const INSTANCES = [
+      { name: "Выживание", version: "1.21.1", loader: "vanilla" },
+      { name: "Моды Fabric", version: "1.20.4", loader: "fabric" },
+      { name: "Технический", version: "1.20.1", loader: "forge" },
+      { name: "Ванила 1.8", version: "1.8.9", loader: "vanilla" }
+    ];
+
+    const FILTERS = ["Все", "Vanilla", "Fabric", "Forge"];
+    let currentFilter = "Все";
+    let selectedIndex = 0;
+    let busy = false;
+
+    function setHue(hue, btn) {
+      document.documentElement.style.setProperty("--hue", hue);
+      document.querySelectorAll(".swatch").forEach(s => s.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+      localStorage.setItem("hue", hue);
+    }
+
+    function renderSwatches() {
+      const wrap = document.getElementById("swatches");
+      const savedHue = Number(localStorage.getItem("hue")) || 145;
+      COLORS.forEach(c => {
+        const b = document.createElement("button");
+        b.className = "swatch";
+        b.title = c.name;
+        b.style.background = `hsl(${c.hue} 60% 50%)`;
+        if (c.hue === savedHue) b.classList.add("active");
+        b.onclick = () => setHue(c.hue, b);
+        wrap.appendChild(b);
+      });
+      setHue(savedHue, [...wrap.children].find(b => b.classList.contains("active")));
+    }
+
+    function renderFilters() {
+      const wrap = document.getElementById("chips");
+      wrap.innerHTML = "";
+      FILTERS.forEach(f => {
+        const c = document.createElement("button");
+        c.className = "chip" + (f === currentFilter ? " active" : "");
+        c.textContent = f;
+        c.onclick = () => { currentFilter = f; renderFilters(); renderInstances(); };
+        wrap.appendChild(c);
+      });
+    }
+
+    function renderInstances() {
+      const wrap = document.getElementById("instances");
+      wrap.innerHTML = "";
+      INSTANCES.forEach((inst, i) => {
+        const matches = currentFilter === "Все" || inst.loader.toLowerCase() === currentFilter.toLowerCase();
+        if (!matches) return;
+        const el = document.createElement("div");
+        el.className = "instance" + (i === selectedIndex ? " selected" : "");
+        el.innerHTML = `
+          <div>
+            <div class="name">${inst.name}</div>
+            <div class="meta">Minecraft ${inst.version}</div>
+          </div>
+          <span class="badge">${inst.loader}</span>`;
+        el.onclick = () => { selectedIndex = i; renderInstances(); };
+        wrap.appendChild(el);
+      });
+      if (!wrap.children.length) wrap.textContent = "Сборок нет";
+    }
+
+    function updateRam() {
+      document.getElementById("ramValue").textContent = document.getElementById("ram").value + " ГБ";
+    }
+
+    function showToast(text) {
+      const t = document.getElementById("toast");
+      t.textContent = text;
+      t.classList.add("show");
+      setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    function launch() {
+      if (busy) return;
+      busy = true;
+      const btn = document.getElementById("launchBtn");
+      const bar = document.getElementById("progressBar");
+      const prog = document.getElementById("progress");
+      const status = document.getElementById("status");
+      const inst = INSTANCES[selectedIndex];
+      const ram = document.getElementById("ram").value;
+
+      btn.disabled = true;
+      prog.classList.add("show");
+      bar.style.width = "0%";
+
+      const steps = [
+        "Проверка файлов...",
+        "Загрузка библиотек...",
+        "Загрузка ресурсов...",
+        `Запуск Minecraft ${inst.version} (${ram} ГБ RAM)...`
+      ];
+      let p = 0, s = 0;
+      const timer = setInterval(() => {
+        p += 4;
+        bar.style.width = Math.min(p, 100) + "%";
+        if (p % 25 === 0 && s < steps.length) status.textContent = steps[s++];
+        if (p >= 100) {
+          clearInterval(timer);
+          status.textContent = "Игра запущена (симуляция)";
+          showToast(`${inst.name} готова`);
+          btn.disabled = false;
+          busy = false;
+        }
+      }, 100);
+    }
+
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", next);
+      applyTheme(next);
+    }
+
+    function applyTheme(mode) {
+      document.documentElement.setAttribute("data-theme", mode);
+      document.getElementById("themeBtn").textContent = mode === "dark" ? "☀" : "🌙";
+    }
+
+    const savedTheme = localStorage.getItem("theme");
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    applyTheme(savedTheme || (systemDark ? "dark" : "light"));
+
+    renderSwatches();
+    renderFilters();
+    renderInstances();
+    updateRam();
+  </script>
+</body>
+</html>
